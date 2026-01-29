@@ -1,5 +1,7 @@
 # React Polaris Web Components
 
+by [Polaris Kit](https://www.polariskit.dev/)
+
 React-ergonomic bindings for Shopify Polaris Web Components.
 
 This project provides a thin, typed adapter layer that makes Polaris Web Components feel native in React — without re-implementing or replacing Polaris.
