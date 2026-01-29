@@ -58,10 +58,14 @@ This project simply makes it pleasant to use in React.
 
 ### After (with adapter)
 
-```jsx
-const [date, setDate] = (useState < Date) | (null > null);
+```tsx
+const [date, setDate] = useState<Date | null>(null);
 
-<DatePicker value={date} onChange={setDate} min={new Date(2024, 0, 1)} />;
+<DatePicker
+  value={date}
+  onChange={setDate}
+  min={new Date(2024, 0, 1)}
+/>
 ```
 
 Same Polaris component.
