@@ -1,6 +1,6 @@
 # React Polaris Web Components
 
-by [Polaris Kit](https://www.polariskit.dev/)
+by [Polaris Kit](https://www.polariskit.dev/) - visit for full documentation
 
 React-ergonomic bindings for Shopify Polaris Web Components.
 
