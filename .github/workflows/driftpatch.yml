@@ -1,0 +1,89 @@
+name: DriftPatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_sha:
+        description: 'Previous Polaris bundle SHA (40-char hex). The "to" side is always the current CDN build.'
+        required: false
+        default: '913ce26d86e1755e5b8c29606465c88c2fccf691'
+      open_pr:
+        description: 'If validation passes, open a PR. Off = dry-run (artifact only).'
+        type: boolean
+        default: false
+      model:
+        description: 'Claude model id'
+        required: false
+        default: 'claude-sonnet-4-6'
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9.12.2
+
+      - name: Install target deps (so validation commands work)
+        run: npm install
+
+      - name: Clone DriftPatch
+        run: git clone --depth 1 https://github.com/Jaqito/driftpatch.git /tmp/driftpatch
+
+      - name: Build DriftPatch
+        working-directory: /tmp/driftpatch
+        run: |
+          pnpm install
+          pnpm --filter @driftpatch/core \
+                --filter @driftpatch/adapter-sdk \
+                --filter @driftpatch/adapter-generic \
+                --filter @driftpatch-example/adapter-polaris \
+                --filter @driftpatch/cli \
+                build
+
+      - name: Configure git for commit/push
+        run: |
+          git config user.name "driftpatch[bot]"
+          git config user.email "driftpatch[bot]@users.noreply.github.com"
+
+      - name: Run DriftPatch
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          ARGS="run --provider polaris \
+                    --from ${{ inputs.from_sha }} --to current \
+                    --repo . \
+                    --skill driftpatch.skill.md \
+                    --patch --validate --repair \
+                    --model ${{ inputs.model }} \
+                    --allow-dirty"
+          if [ "${{ inputs.open_pr }}" = "true" ]; then
+            ARGS="$ARGS --pr"
+          fi
+          node /tmp/driftpatch/packages/cli/dist/cli.js $ARGS
+
+      - name: Upload DriftPatch artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: driftpatch-output
+          path: |
+            .driftpatch/proposed.patch
+            .driftpatch/repaired.patch
+            .driftpatch/patch-plan.json
+          if-no-files-found: ignore
