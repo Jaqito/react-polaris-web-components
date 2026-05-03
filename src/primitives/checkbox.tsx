@@ -23,6 +23,8 @@ export interface CheckboxProps {
     indeterminate?: SCheckboxProps['indeterminate'];
     /** Visual label text */
     label?: SCheckboxProps['label'];
+    /** Controls the visibility of the label for accessibility purposes */
+    labelAccessibilityVisibility?: string;
     /** Form field identifier */
     name?: SCheckboxProps['name'];
     /** Marks field as required */
